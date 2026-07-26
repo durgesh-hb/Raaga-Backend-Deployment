@@ -24,7 +24,7 @@ public class MusicService {
     private static final long CACHE_DURATION = 10 * 60 * 1000;
 
     // Retry configuration
-    private static final int MAX_ATTEMPTS = 3;
+    private static final int MAX_ATTEMPTS = 5;
 
     public MusicService(
             @Value("${music.api.base-url}") String musicApiBaseUrl) {
@@ -80,7 +80,8 @@ public class MusicService {
             return songs;
         }
 
-        List<Map> results = (List<Map>) data.get("results");
+        List<Map> results =
+                (List<Map>) data.get("results");
 
         if (results == null) {
             return songs;
@@ -110,7 +111,11 @@ public class MusicService {
 
     private Map callSearchApiWithRetry(String query) {
 
-        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        for (
+                int attempt = 1;
+                attempt <= MAX_ATTEMPTS;
+                attempt++
+        ) {
 
             try {
 
@@ -147,38 +152,27 @@ public class MusicService {
                         error.getMessage()
                 );
 
-                // Last attempt - let our global exception
-                // handler handle the failure.
                 if (attempt == MAX_ATTEMPTS) {
+
+                    System.out.println(
+                            "JIOSAAVN FAILED AFTER " +
+                            MAX_ATTEMPTS +
+                            " ATTEMPTS"
+                    );
+
                     throw error;
                 }
 
-                try {
+                long waitTime =
+                        getRetryWaitTime(attempt);
 
-                    // Give the free Render service time
-                    // to wake up.
-                    long waitTime =
-                            attempt == 1
-                                    ? 3000
-                                    : 5000;
+                System.out.println(
+                        "WAITING " +
+                        waitTime +
+                        "ms BEFORE RETRY"
+                );
 
-                    System.out.println(
-                            "WAITING " +
-                            waitTime +
-                            "ms BEFORE RETRY"
-                    );
-
-                    Thread.sleep(waitTime);
-
-                } catch (InterruptedException interruptedException) {
-
-                    Thread.currentThread().interrupt();
-
-                    throw new RuntimeException(
-                            "Retry interrupted",
-                            interruptedException
-                    );
-                }
+                sleepBeforeRetry(waitTime);
             }
         }
 
@@ -191,25 +185,30 @@ public class MusicService {
 
     public SongDTO getSongById(String id) {
 
-        Map response = callSongApiWithRetry(id);
+        Map response =
+                callSongApiWithRetry(id);
 
         if (response == null) {
             return null;
         }
 
-        Object dataObject = response.get("data");
+        Object dataObject =
+                response.get("data");
 
         if (!(dataObject instanceof List)) {
             return null;
         }
 
-        List<Map> songs = (List<Map>) dataObject;
+        List<Map> songs =
+                (List<Map>) dataObject;
 
         if (songs.isEmpty()) {
             return null;
         }
 
-        return convertToSongDTO(songs.get(0));
+        return convertToSongDTO(
+                songs.get(0)
+        );
     }
 
     // =====================================================
@@ -218,7 +217,11 @@ public class MusicService {
 
     private Map callSongApiWithRetry(String id) {
 
-        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        for (
+                int attempt = 1;
+                attempt <= MAX_ATTEMPTS;
+                attempt++
+        ) {
 
             try {
 
@@ -237,6 +240,12 @@ public class MusicService {
                         .retrieve()
                         .body(Map.class);
 
+                System.out.println(
+                        "SONG API ATTEMPT " +
+                        attempt +
+                        " SUCCESS"
+                );
+
                 return response;
 
             } catch (RestClientException error) {
@@ -249,31 +258,76 @@ public class MusicService {
                 );
 
                 if (attempt == MAX_ATTEMPTS) {
+
+                    System.out.println(
+                            "SONG API FAILED AFTER " +
+                            MAX_ATTEMPTS +
+                            " ATTEMPTS"
+                    );
+
                     throw error;
                 }
 
-                try {
+                long waitTime =
+                        getRetryWaitTime(attempt);
 
-                    long waitTime =
-                            attempt == 1
-                                    ? 3000
-                                    : 5000;
+                System.out.println(
+                        "WAITING " +
+                        waitTime +
+                        "ms BEFORE SONG API RETRY"
+                );
 
-                    Thread.sleep(waitTime);
-
-                } catch (InterruptedException interruptedException) {
-
-                    Thread.currentThread().interrupt();
-
-                    throw new RuntimeException(
-                            "Retry interrupted",
-                            interruptedException
-                    );
-                }
+                sleepBeforeRetry(waitTime);
             }
         }
 
         return null;
+    }
+
+    // =====================================================
+    // RETRY WAIT TIME
+    // =====================================================
+
+    private long getRetryWaitTime(int attempt) {
+
+        switch (attempt) {
+
+            case 1:
+                return 3000;
+
+            case 2:
+                return 5000;
+
+            case 3:
+                return 8000;
+
+            default:
+                return 10000;
+        }
+    }
+
+    // =====================================================
+    // SLEEP BEFORE RETRY
+    // =====================================================
+
+    private void sleepBeforeRetry(long waitTime) {
+
+        try {
+
+            Thread.sleep(waitTime);
+
+        } catch (
+                InterruptedException
+                        interruptedException
+        ) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Retry interrupted",
+                    interruptedException
+            );
+        }
     }
 
     // =====================================================
@@ -282,15 +336,22 @@ public class MusicService {
 
     private SongDTO convertToSongDTO(Map song) {
 
-        String id = (String) song.get("id");
-        String name = (String) song.get("name");
-        String language = (String) song.get("language");
+        String id =
+                (String) song.get("id");
 
-        Number durationValue = (Number) song.get("duration");
+        String name =
+                (String) song.get("name");
 
-        int duration = durationValue != null
-                ? durationValue.intValue()
-                : 0;
+        String language =
+                (String) song.get("language");
+
+        Number durationValue =
+                (Number) song.get("duration");
+
+        int duration =
+                durationValue != null
+                        ? durationValue.intValue()
+                        : 0;
 
         // -------------------------
         // Artists
@@ -298,26 +359,39 @@ public class MusicService {
 
         String artist = "Unknown Artist";
 
-        Map artists = (Map) song.get("artists");
+        Map artists =
+                (Map) song.get("artists");
 
         if (artists != null) {
 
             List<Map> primaryArtists =
-                    (List<Map>) artists.get("primary");
+                    (List<Map>) artists.get(
+                            "primary"
+                    );
 
-            if (primaryArtists != null &&
-                    !primaryArtists.isEmpty()) {
+            if (
+                    primaryArtists != null &&
+                    !primaryArtists.isEmpty()
+            ) {
 
                 List<String> artistNames =
                         new ArrayList<>();
 
-                for (Map artistData : primaryArtists) {
+                for (
+                        Map artistData :
+                        primaryArtists
+                ) {
 
                     String artistName =
-                            (String) artistData.get("name");
+                            (String)
+                            artistData.get(
+                                    "name"
+                            );
 
                     if (artistName != null) {
-                        artistNames.add(artistName);
+                        artistNames.add(
+                                artistName
+                        );
                     }
                 }
 
@@ -337,11 +411,17 @@ public class MusicService {
         List<Map> images =
                 (List<Map>) song.get("image");
 
-        if (images != null && !images.isEmpty()) {
+        if (
+                images != null &&
+                !images.isEmpty()
+        ) {
 
-            imageUrl = (String) images
-                    .get(images.size() - 1)
-                    .get("url");
+            imageUrl =
+                    (String) images
+                            .get(
+                                    images.size() - 1
+                            )
+                            .get("url");
         }
 
         // -------------------------
@@ -351,14 +431,20 @@ public class MusicService {
         String audioUrl = null;
 
         List<Map> downloadUrls =
-                (List<Map>) song.get("downloadUrl");
+                (List<Map>)
+                song.get("downloadUrl");
 
-        if (downloadUrls != null &&
-                !downloadUrls.isEmpty()) {
+        if (
+                downloadUrls != null &&
+                !downloadUrls.isEmpty()
+        ) {
 
-            audioUrl = (String) downloadUrls
-                    .get(downloadUrls.size() - 1)
-                    .get("url");
+            audioUrl =
+                    (String) downloadUrls
+                            .get(
+                                    downloadUrls.size() - 1
+                            )
+                            .get("url");
         }
 
         return new SongDTO(
@@ -379,11 +465,13 @@ public class MusicService {
     private static class CacheEntry {
 
         private final List<SongDTO> songs;
+
         private final long createdAt;
 
         public CacheEntry(
                 List<SongDTO> songs,
-                long createdAt) {
+                long createdAt
+        ) {
 
             this.songs = songs;
             this.createdAt = createdAt;
