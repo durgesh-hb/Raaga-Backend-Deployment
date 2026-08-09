@@ -2,6 +2,7 @@ package com.mymusic.backend.service;
 
 import com.mymusic.backend.dto.AuthResponseDTO;
 import com.mymusic.backend.dto.GoogleAuthRequestDTO;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -9,17 +10,23 @@ import java.util.UUID;
 @Service
 public class GoogleAuthService {
 
+    @Value("${google.client.id:${GOOGLE_CLIENT_ID:}}")
+    private String googleClientId;
+
     /**
      * Generates Google OAuth consent URL for client redirection.
      */
     public String getGoogleOAuthConsentUrl(String redirectUri) {
+        if (googleClientId == null || googleClientId.isBlank() || "SUPABASE_GOOGLE_CLIENT_ID".equals(googleClientId)) {
+            return null;
+        }
         String baseUrl = "https://accounts.google.com/o/oauth2/v2/auth";
         String clientRedirect = (redirectUri != null && !redirectUri.isBlank()) 
                 ? redirectUri 
                 : "myapp://google-auth";
         
         return baseUrl + "?response_type=code"
-                + "&client_id=SUPABASE_GOOGLE_CLIENT_ID"
+                + "&client_id=" + googleClientId
                 + "&redirect_uri=" + clientRedirect
                 + "&scope=openid%20email%20profile"
                 + "&access_type=offline"

@@ -23,11 +23,15 @@ public class AuthController {
      * Endpoint returning Google OAuth redirect URL configuration
      */
     @GetMapping("/google/url")
-    public ResponseEntity<Map<String, String>> getGoogleAuthUrl(@RequestParam(required = false) String redirectUri) {
+    public ResponseEntity<Map<String, Object>> getGoogleAuthUrl(@RequestParam(required = false) String redirectUri) {
         String authUrl = googleAuthService.getGoogleOAuthConsentUrl(redirectUri);
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("url", authUrl);
+        response.put("configured", authUrl != null);
         response.put("provider", "google");
+        if (authUrl == null) {
+            response.put("message", "GOOGLE_CLIENT_ID is not configured in backend environment.");
+        }
         return ResponseEntity.ok(response);
     }
 

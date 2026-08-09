@@ -1,5 +1,6 @@
 package com.mymusic.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,8 +16,13 @@ public class SongDTO {
     private String title;
     private String artist;
     private String album;
+
+    @JsonProperty("artworkUrl")
     private String artworkUrl;
+
+    @JsonProperty("streamUrl")
     private String streamUrl;
+
     private int duration;
     private String language;
 
@@ -44,15 +50,23 @@ public class SongDTO {
         this.language = "Hindi";
     }
 
-    // Legacy getter aliases for compatibility
+    // Normalized getter aliases for compatibility
+    @JsonProperty("artwork")
+    public String getArtwork() {
+        return artworkUrl;
+    }
+
+    @JsonProperty("name")
     public String getName() {
         return title;
     }
 
+    @JsonProperty("imageUrl")
     public String getImageUrl() {
         return artworkUrl;
     }
 
+    @JsonProperty("audioUrl")
     public String getAudioUrl() {
         return streamUrl;
     }
