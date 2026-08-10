@@ -1,0 +1,28 @@
+# Build output & targets
+target/
+*.jar
+*.war
+
+# Environment & credentials
+.env
+*.env.local
+
+# Git & Repository metadata
+.git/
+.gitignore
+.gitattributes
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.eclipse/
+*.classpath
+*.project
+
+# Agent & Workspace scratch metadata
+.agents/
+*.md
+
+# Docker auxiliary files
+docker-compose.yml
+.dockerignore
