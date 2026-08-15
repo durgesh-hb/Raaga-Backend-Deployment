@@ -32,6 +32,8 @@ build/
 ### Environment Variables ###
 .env
 .env.*
+!.env.example
+
 
 ### VS Code ###
 .vscode/
