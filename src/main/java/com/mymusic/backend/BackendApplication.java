@@ -1,5 +1,6 @@
 package com.mymusic.backend;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import javax.sql.DataSource;
 import java.sql.Connection;
 
@@ -12,6 +13,8 @@ import org.springframework.context.annotation.Bean;
 public class BackendApplication {
 
 	public static void main(String[] args) {
+		Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+		dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
 		SpringApplication.run(BackendApplication.class, args);
 	}
 
@@ -32,6 +35,4 @@ public class BackendApplication {
 				System.err.println("=================================================\n");
 			}
 		};
-	}
-
-}
+    }}
