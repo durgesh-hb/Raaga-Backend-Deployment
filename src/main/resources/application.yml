@@ -19,3 +19,12 @@ spring:
 music:
   api:
     base-url: ${MUSIC_API_BASE_URL:https://jiosaavn-api-gato.onrender.com}
+
+
+
+
+    
+
+
+
+
