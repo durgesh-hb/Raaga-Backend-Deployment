@@ -1,36 +1,26 @@
-# Stage 1: Build stage
-FROM eclipse-temurin:17-jdk-alpine AS builder
-
+# Build Stage
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
-
-# Copy Maven wrapper and POM for dependency layer caching
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-
-# Fix Windows CRLF line endings on mvnw and set executable permission
-RUN tr -d '\r' < mvnw > mvnw.tmp && mv mvnw.tmp mvnw && chmod +x mvnw
-
-# Pre-fetch dependencies to speed up future builds
-RUN ./mvnw dependency:go-offline -B || true
-
-# Copy source code and build final package
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
-# Stage 2: Production Runtime stage
+# Runtime Stage
 FROM eclipse-temurin:17-jre-alpine
-
 WORKDIR /app
 
 # Create non-root system user for container security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copy executable jar from builder stage
-COPY --from=builder /app/target/*.jar app.jar
+# Copy executable jar from build stage
+COPY --from=build /app/target/*.jar app.jar
 
-# Switch to non-root user
+# Switch to non-root user for security
 USER appuser
 
-EXPOSE 8080
+ENV PORT=8080
+EXPOSE ${PORT}
 
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Xmx384m -jar app.jar"]
+
