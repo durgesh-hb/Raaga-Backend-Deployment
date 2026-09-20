@@ -27,6 +27,15 @@ public class MusicController {
         this.dataSource = dataSource;
     }
 
+    @GetMapping("/")
+    public java.util.Map<String, Object> root() {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("status", "ONLINE");
+        response.put("message", "Raaga Backend API is running!");
+        response.put("version", "1.0.0");
+        return response;
+    }
+
     @GetMapping("/api/music/test")
     public String test() {
         return "MyMusic Backend is working!";

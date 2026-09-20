@@ -43,6 +43,21 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    // Handle 404 Not Found for static resources / unmapped routes
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+
+        Map<String, String> error = new HashMap<>();
+
+        error.put("error", "NOT_FOUND");
+        error.put("message", "Endpoint not found: /" + ex.getResourcePath());
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
+
     // Handle unexpected errors
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneralError(
